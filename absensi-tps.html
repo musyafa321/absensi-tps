@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Absensi TPS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hijau: #1a7a4a;
+    --hijau-muda: #27a85f;
+    --hijau-terang: #4ade80;
+    --kuning: #f5c518;
+    --bg: #0d1f14;
+    --bg2: #132a1c;
+    --bg3: #1b3825;
+    --kartu: #1e3a28;
+    --teks: #e8f5ee;
+    --teks-redup: #7aab8a;
+    --merah: #ef4444;
+    --biru: #38bdf8;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--teks);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    width: 100%;
+    background: var(--bg2);
+    border-bottom: 2px solid var(--hijau);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon { font-size: 28px; }
+  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-sub { font-size: 11px; color: var(--teks-redup); font-weight: 300; }
+  .jam-sekarang {
+    margin-left: auto;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--hijau-terang);
+    font-weight: 700;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 430px; padding: 20px 16px; flex-direction: column; gap: 16px; }
+  .screen.aktif { display: flex; }
+
+  /* ===== KARTU ===== */
+  .kartu {
+    background: var(--kartu);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(39,168,95,0.2);
+    box-shadow: var(--shadow);
+  }
+  .kartu-judul {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--teks-redup);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  /* ===== PILIH NAMA ===== */
+  .daftar-nama {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .btn-nama {
+    background: var(--bg3);
+    border: 1px solid rgba(39,168,95,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--teks);
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-nama:hover, .btn-nama:active {
+    background: var(--hijau);
+    border-color: var(--hijau-terang);
+    transform: scale(0.98);
+  }
+  .btn-nama .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--hijau);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* ===== KEYPAD PIN ===== */
+  .pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 8px 0 20px;
+  }
+  .pin-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--hijau-muda);
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .pin-dot.isi { background: var(--hijau-terang); border-color: var(--hijau-terang); }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .btn-key {
+    background: var(--bg3);
+    border: 1px solid rgba(39,168,95,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    color: var(--teks);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+  }
+  .btn-key:active { background: var(--hijau); transform: scale(0.94); }
+  .btn-key.hapus { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); font-size: 18px; }
+  .btn-key.hapus:active { background: var(--merah); }
+
+  /* ===== NAMA DIPILIH ===== */
+  .profil-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--bg3);
+    border-radius: 12px;
+    border: 1px solid rgba(39,168,95,0.3);
+  }
+  .profil-avatar {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hijau), var(--hijau-terang));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .profil-nama { font-size: 18px; font-weight: 700; }
+  .profil-sub { font-size: 12px; color: var(--teks-redup); }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-wrap {
+    background: var(--bg3);
+    border-radius: 100px;
+    height: 14px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--hijau), var(--hijau-terang));
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    min-width: 4px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--teks-redup);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .progress-jam {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--hijau-terang);
+    letter-spacing: -1px;
+  }
+
+  /* ===== TOMBOL AKSI ===== */
+  .btn-aksi {
+    width: 100%;
+    padding: 18px;
+    border-radius: 14px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    letter-spacing: 0.3px;
+  }
+  .btn-masuk {
+    background: linear-gradient(135deg, var(--hijau), var(--hijau-muda));
+    color: white;
+    box-shadow: 0 4px 20px rgba(39,168,95,0.4);
+  }
+  .btn-masuk:active { transform: scale(0.97); }
+  .btn-keluar {
+    background: linear-gradient(135deg, #c2410c, #ea580c);
+    color: white;
+    box-shadow: 0 4px 20px rgba(234,88,12,0.3);
+  }
+  .btn-keluar:active { transform: scale(0.97); }
+  .btn-abu {
+    background: var(--bg3);
+    color: var(--teks-redup);
+    border: 1px solid rgba(122,171,138,0.3);
+  }
+  .btn-abu:active { transform: scale(0.97); }
+
+  /* ===== SESI AKTIF ===== */
+  .sesi-aktif-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(39,168,95,0.15);
+    border: 1px solid var(--hijau-muda);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hijau-terang);
+  }
+  .dot-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--hijau-terang);
+    animation: pulse 1.4s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ===== RIWAYAT ===== */
+  .riwayat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(39,168,95,0.1);
+    font-size: 13px;
+  }
+  .riwayat-item:last-child { border-bottom: none; }
+  .riwayat-sesi { color: var(--teks-redup); }
+  .riwayat-durasi {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--hijau-terang);
+    font-weight: 700;
+  }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--kartu);
+    border: 1px solid var(--hijau);
+    border-radius: 14px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    max-width: 340px;
+    text-align: center;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    box-shadow: var(--shadow);
+  }
+  #toast.tampil { transform: translateX(-50%) translateY(0); }
+  #toast.sukses { border-color: var(--hijau-terang); color: var(--hijau-terang); }
+  #toast.gagal { border-color: var(--merah); color: var(--merah); }
+
+  /* ===== LOADING ===== */
+  .loading { display: none; flex-direction: column; align-items: center; gap: 12px; padding: 20px; }
+  .loading.aktif { display: flex; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(39,168,95,0.2);
+    border-top-color: var(--hijau-terang);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== TARGET TERCAPAI ===== */
+  .target-tercapai {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(39,168,95,0.2), rgba(74,222,128,0.1));
+    border: 2px solid var(--hijau-terang);
+    border-radius: 16px;
+  }
+  .target-tercapai .emoji { font-size: 48px; margin-bottom: 8px; }
+  .target-tercapai .judul { font-size: 20px; font-weight: 800; color: var(--hijau-terang); }
+  .target-tercapai .sub { font-size: 13px; color: var(--teks-redup); margin-top: 4px; }
+
+  /* ===== KONFIGURASI ===== */
+  .config-url {
+    background: var(--bg3);
+    border: 1px solid rgba(39,168,95,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--teks-redup);
+    width: 100%;
+    word-break: break-all;
+  }
+  .input-url {
+    background: var(--bg3);
+    border: 1px solid rgba(39,168,95,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--teks);
+    width: 100%;
+    outline: none;
+  }
+  .input-url:focus { border-color: var(--hijau-terang); }
+
+  .label { font-size: 12px; color: var(--teks-redup); margin-bottom: 6px; font-weight: 600; }
+
+  .chip-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+  .chip-ok { background: rgba(74,222,128,0.15); color: var(--hijau-terang); border: 1px solid rgba(74,222,128,0.3); }
+  .chip-err { background: rgba(239,68,68,0.15); color: var(--merah); border: 1px solid rgba(239,68,68,0.3); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">♻️</div>
+  <div>
+    <div class="header-title">Absensi TPS</div>
+    <div class="header-sub">Sistem Kehadiran Petugas</div>
+  </div>
+  <div class="jam-sekarang" id="jamHeader">--:--:--</div>
+</div>
+
+<!-- SCREEN: SETUP -->
+<div class="screen aktif" id="screenSetup">
+  <div class="kartu">
+    <div class="kartu-judul">⚙️ Konfigurasi Awal</div>
+    <p style="font-size:13px; color:var(--teks-redup); margin-bottom:16px; line-height:1.6;">
+      Tempel URL Google Apps Script yang sudah kamu deploy. Ini hanya perlu dilakukan sekali.
+    </p>
+    <div class="label">URL Apps Script (Web App)</div>
+    <input type="url" class="input-url" id="inputScriptUrl"
+      placeholder="https://script.google.com/macros/s/..." />
+  </div>
+  <button class="btn-aksi btn-masuk" onclick="simpanKonfigurasi()">
+    💾 Simpan & Mulai
+  </button>
+  <div class="kartu" style="font-size:12px; color:var(--teks-redup); line-height:1.7;">
+    <div class="kartu-judul">📋 Cara deploy Apps Script</div>
+    1. Buka Google Sheets → Extensions → Apps Script<br>
+    2. Paste kode dari file <b>Code.gs</b><br>
+    3. Klik <b>Deploy → New deployment</b><br>
+    4. Pilih type: <b>Web App</b><br>
+    5. Execute as: <b>Me</b>, Access: <b>Anyone</b><br>
+    6. Klik Deploy → copy URL → paste di atas
+  </div>
+</div>
+
+<!-- SCREEN: PILIH NAMA -->
+<div class="screen" id="screenPilihNama">
+  <div class="kartu">
+    <div class="kartu-judul">👤 Pilih Nama Kamu</div>
+    <div class="loading" id="loadingNama">
+      <div class="spinner"></div>
+      <span style="font-size:13px; color:var(--teks-redup);">Memuat data...</span>
+    </div>
+    <div class="daftar-nama" id="daftarNama"></div>
+  </div>
+  <button class="btn-aksi btn-abu" onclick="bukaSetup()" style="font-size:13px;">
+    ⚙️ Ubah Konfigurasi
+  </button>
+</div>
+
+<!-- SCREEN: PIN -->
+<div class="screen" id="screenPin">
+  <div class="kartu">
+    <div class="kartu-judul">🔐 Masukkan PIN</div>
+    <div class="profil-card" id="profilPinCard">
+      <div class="profil-avatar" id="profilPinAvatar">?</div>
+      <div>
+        <div class="profil-nama" id="profilPinNama">--</div>
+        <div class="profil-sub">Masukkan PIN 4 digit</div>
+      </div>
+    </div>
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div class="keypad">
+      <button class="btn-key" onclick="tekanPin('1')">1</button>
+      <button class="btn-key" onclick="tekanPin('2')">2</button>
+      <button class="btn-key" onclick="tekanPin('3')">3</button>
+      <button class="btn-key" onclick="tekanPin('4')">4</button>
+      <button class="btn-key" onclick="tekanPin('5')">5</button>
+      <button class="btn-key" onclick="tekanPin('6')">6</button>
+      <button class="btn-key" onclick="tekanPin('7')">7</button>
+      <button class="btn-key" onclick="tekanPin('8')">8</button>
+      <button class="btn-key" onclick="tekanPin('9')">9</button>
+      <button class="btn-key btn-abu" onclick="kembaliPilihNama()" style="font-size:13px;">↩️</button>
+      <button class="btn-key" onclick="tekanPin('0')">0</button>
+      <button class="btn-key hapus" onclick="hapusPin()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: DASHBOARD -->
+<div class="screen" id="screenDashboard">
+  <!-- Profil -->
+  <div class="profil-card">
+    <div class="profil-avatar" id="dashAvatar">?</div>
+    <div>
+      <div class="profil-nama" id="dashNama">--</div>
+      <div class="profil-sub" id="dashTanggal">--</div>
+    </div>
+    <button onclick="logout()" style="margin-left:auto; background:none; border:none; font-size:20px; cursor:pointer;">🚪</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loadingDash">
+    <div class="spinner"></div>
+    <span style="font-size:13px; color:var(--teks-redup);">Memuat status...</span>
+  </div>
+
+  <!-- Target Tercapai -->
+  <div id="blokTargetTercapai" style="display:none;">
+    <div class="target-tercapai">
+      <div class="emoji">🎉</div>
+      <div class="judul">Target 8 Jam Tercapai!</div>
+      <div class="sub">Kerja keras hari ini sudah selesai. Mantap!</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="kartu" id="blokProgress">
+    <div class="kartu-judul">📊 Progress Hari Ini</div>
+    <div class="progress-jam" id="progressJam">0.00 jam</div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="progress-label">
+      <span id="progressPersen">0%</span>
+      <span>Target: 8 jam</span>
+    </div>
+  </div>
+
+  <!-- Sesi aktif -->
+  <div id="blokSesiAktif" style="display:none;">
+    <div class="sesi-aktif-badge">
+      <div class="dot-pulse"></div>
+      <span>Sesi aktif sejak: <b id="jamMasukAktif">--</b></span>
+    </div>
+  </div>
+
+  <!-- Tombol Clock In / Out -->
+  <div id="blokTombol">
+    <button class="btn-aksi btn-masuk" id="btnClockIn" onclick="clockIn()">
+      ✅ Clock In — Mulai Kerja
+    </button>
+    <button class="btn-aksi btn-keluar" id="btnClockOut" onclick="clockOut()" style="display:none; margin-top:10px;">
+      🏁 Clock Out — Selesai Sesi
+    </button>
+  </div>
+
+  <!-- Riwayat hari ini -->
+  <div class="kartu">
+    <div class="kartu-judul">📋 Sesi Hari Ini</div>
+    <div id="riwayatList">
+      <div style="color:var(--teks-redup); font-size:13px; text-align:center; padding:10px 0;">Belum ada sesi hari ini</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ===== STATE =====
+let scriptUrl = localStorage.getItem('tps_script_url') || '';
+let namaDipilih = '';
+let pinInput = '';
+let statusDash = null;
+
+// ===== JAM REAL-TIME =====
+function updateJam() {
+  const now = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+  document.getElementById('jamHeader').textContent =
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(updateJam, 1000);
+updateJam();
+
+// ===== SCREEN MANAGEMENT =====
+function tampilScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('aktif'));
+  document.getElementById(id).classList.add('aktif');
+}
+
+// ===== INIT =====
+function init() {
+  if (!scriptUrl) {
+    tampilScreen('screenSetup');
+  } else {
+    tampilScreen('screenPilihNama');
+    muatDaftarNama();
+  }
+}
+
+// ===== KONFIGURASI =====
+function simpanKonfigurasi() {
+  const url = document.getElementById('inputScriptUrl').value.trim();
+  if (!url || !url.startsWith('https://')) {
+    tampilToast('URL tidak valid!', 'gagal');
+    return;
+  }
+  scriptUrl = url;
+  localStorage.setItem('tps_script_url', url);
+  tampilToast('Konfigurasi disimpan! 🎉', 'sukses');
+  setTimeout(() => {
+    tampilScreen('screenPilihNama');
+    muatDaftarNama();
+  }, 800);
+}
+
+function bukaSetup() {
+  document.getElementById('inputScriptUrl').value = scriptUrl;
+  tampilScreen('screenSetup');
+}
+
+// ===== API CALL =====
+async function callApi(data) {
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'text/plain' },
+    redirect: 'follow'
+  });
+  return await res.json();
+}
+
+async function callApiGet(params) {
+  const url = new URL(scriptUrl);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString(), { redirect: 'follow' });
+  return await res.json();
+}
+
+// ===== MUAT DAFTAR NAMA =====
+async function muatDaftarNama() {
+  document.getElementById('loadingNama').classList.add('aktif');
+  document.getElementById('daftarNama').innerHTML = '';
+  try {
+    const result = await callApiGet({ action: 'getDaftarKaryawan' });
+    document.getElementById('loadingNama').classList.remove('aktif');
+    if (!result.success || !result.karyawan.length) {
+      document.getElementById('daftarNama').innerHTML =
+        '<div style="color:var(--teks-redup);font-size:13px;padding:10px 0;text-align:center;">Tidak ada data karyawan.<br>Tambah di sheet "Karyawan".</div>';
+      return;
+    }
+    result.karyawan.forEach(nama => {
+      const el = document.createElement('button');
+      el.className = 'btn-nama';
+      el.innerHTML = `<div class="avatar">${nama[0].toUpperCase()}</div> ${nama}`;
+      el.onclick = () => pilihNama(nama);
+      document.getElementById('daftarNama').appendChild(el);
+    });
+  } catch (e) {
+    document.getElementById('loadingNama').classList.remove('aktif');
+    document.getElementById('daftarNama').innerHTML =
+      `<div style="color:var(--merah);font-size:13px;padding:10px 0;text-align:center;">Gagal memuat data.<br>Cek URL Apps Script.</div>`;
+  }
+}
+
+// ===== PILIH NAMA =====
+function pilihNama(nama) {
+  namaDipilih = nama;
+  pinInput = '';
+  document.getElementById('profilPinNama').textContent = nama;
+  document.getElementById('profilPinAvatar').textContent = nama[0].toUpperCase();
+  updatePinDisplay();
+  tampilScreen('screenPin');
+}
+
+// ===== PIN KEYPAD =====
+function tekanPin(angka) {
+  if (pinInput.length >= 4) return;
+  pinInput += angka;
+  updatePinDisplay();
+  if (pinInput.length === 4) {
+    setTimeout(prosesLogin, 200);
+  }
+}
+
+function hapusPin() {
+  pinInput = pinInput.slice(0, -1);
+  updatePinDisplay();
+}
+
+function updatePinDisplay() {
+  const dots = document.querySelectorAll('#pinDisplay .pin-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('isi', i < pinInput.length);
+  });
+}
+
+function kembaliPilihNama() {
+  pinInput = '';
+  tampilScreen('screenPilihNama');
+}
+
+// ===== LOGIN =====
+async function prosesLogin() {
+  try {
+    const result = await callApi({ action: 'login', nama: namaDipilih, pin: pinInput });
+    if (result.success) {
+      tampilToast(`Selamat datang, ${namaDipilih}! 👋`, 'sukses');
+      setTimeout(() => bukaDashboard(), 600);
+    } else {
+      tampilToast('PIN salah! Coba lagi.', 'gagal');
+      pinInput = '';
+      updatePinDisplay();
+    }
+  } catch (e) {
+    tampilToast('Koneksi gagal. Coba lagi.', 'gagal');
+    pinInput = '';
+    updatePinDisplay();
+  }
+}
+
+// ===== DASHBOARD =====
+async function bukaDashboard() {
+  tampilScreen('screenDashboard');
+  const now = new Date();
+  document.getElementById('dashNama').textContent = namaDipilih;
+  document.getElementById('dashAvatar').textContent = namaDipilih[0].toUpperCase();
+  document.getElementById('dashTanggal').textContent =
+    now.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  await muatStatusDashboard();
+}
+
+async function muatStatusDashboard() {
+  document.getElementById('loadingDash').classList.add('aktif');
+  document.getElementById('blokProgress').style.display = 'none';
+  document.getElementById('blokSesiAktif').style.display = 'none';
+  document.getElementById('blokTombol').style.display = 'none';
+  document.getElementById('blokTargetTercapai').style.display = 'none';
+
+  try {
+    const result = await callApiGet({ action: 'getStatus', nama: namaDipilih });
+    document.getElementById('loadingDash').classList.remove('aktif');
+    statusDash = result;
+
+    // Progress
+    const menit = result.totalMenitHariIni || 0;
+    const jam = (menit / 60).toFixed(2);
+    const persen = Math.min(100, Math.round(menit / 480 * 100));
+    document.getElementById('progressJam').textContent = `${jam} jam`;
+    document.getElementById('progressBar').style.width = `${persen}%`;
+    document.getElementById('progressPersen').textContent = `${persen}%`;
+    document.getElementById('blokProgress').style.display = 'block';
+
+    if (result.targetTercapai) {
+      document.getElementById('blokTargetTercapai').style.display = 'block';
+      document.getElementById('blokTombol').style.display = 'none';
+    } else {
+      document.getElementById('blokTombol').style.display = 'block';
+      if (result.sesiAktif) {
+        document.getElementById('blokSesiAktif').style.display = 'block';
+        document.getElementById('jamMasukAktif').textContent = result.jamMasukAktif;
+        document.getElementById('btnClockIn').style.display = 'none';
+        document.getElementById('btnClockOut').style.display = 'flex';
+      } else {
+        document.getElementById('btnClockIn').style.display = 'flex';
+        document.getElementById('btnClockOut').style.display = 'none';
+      }
+    }
+
+    // Riwayat (dari localStorage sementara — refresh lengkap dari API)
+    tampilRiwayatDariStatus(result);
+
+  } catch (e) {
+    document.getElementById('loadingDash').classList.remove('aktif');
+    tampilToast('Gagal memuat status.', 'gagal');
+  }
+}
+
+function tampilRiwayatDariStatus(result) {
+  // Tampilkan summary saja (riwayat detail butuh tambahan endpoint)
+  const el = document.getElementById('riwayatList');
+  if (!result.totalMenitHariIni) {
+    el.innerHTML = '<div style="color:var(--teks-redup);font-size:13px;text-align:center;padding:10px 0;">Belum ada sesi hari ini</div>';
+    return;
+  }
+  const menit = result.totalMenitHariIni;
+  el.innerHTML = `
+    <div class="riwayat-item">
+      <span class="riwayat-sesi">Total sesi selesai</span>
+      <span class="riwayat-durasi">${Math.floor(menit/60)}j ${menit%60}m</span>
+    </div>
+    <div class="riwayat-item">
+      <span class="riwayat-sesi">Sisa target</span>
+      <span class="riwayat-durasi">${result.targetTercapai ? '✅ Selesai' : `${Math.floor((480-menit)/60)}j ${(480-menit)%60}m`}</span>
+    </div>
+  `;
+}
+
+// ===== CLOCK IN =====
+async function clockIn() {
+  document.getElementById('btnClockIn').disabled = true;
+  document.getElementById('btnClockIn').textContent = 'Memproses...';
+  try {
+    const result = await callApi({ action: 'clockIn', nama: namaDipilih });
+    if (result.success) {
+      tampilToast(`✅ Clock In ${result.jamMasuk}`, 'sukses');
+      await muatStatusDashboard();
+    } else {
+      tampilToast(result.message, 'gagal');
+    }
+  } catch (e) {
+    tampilToast('Koneksi gagal.', 'gagal');
+  }
+  document.getElementById('btnClockIn').disabled = false;
+  document.getElementById('btnClockIn').innerHTML = '✅ Clock In — Mulai Kerja';
+}
+
+// ===== CLOCK OUT =====
+async function clockOut() {
+  document.getElementById('btnClockOut').disabled = true;
+  document.getElementById('btnClockOut').textContent = 'Memproses...';
+  try {
+    const result = await callApi({ action: 'clockOut', nama: namaDipilih });
+    if (result.success) {
+      tampilToast(`🏁 Clock Out! ${result.pesanTarget}`, 'sukses');
+      await muatStatusDashboard();
+    } else {
+      tampilToast(result.message, 'gagal');
+    }
+  } catch (e) {
+    tampilToast('Koneksi gagal.', 'gagal');
+  }
+  document.getElementById('btnClockOut').disabled = false;
+  document.getElementById('btnClockOut').innerHTML = '🏁 Clock Out — Selesai Sesi';
+}
+
+// ===== LOGOUT =====
+function logout() {
+  namaDipilih = '';
+  pinInput = '';
+  tampilScreen('screenPilihNama');
+}
+
+// ===== TOAST =====
+function tampilToast(pesan, tipe = 'sukses') {
+  const el = document.getElementById('toast');
+  el.textContent = pesan;
+  el.className = `tampil ${tipe}`;
+  setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ===== INIT =====
+init();
+</script>
+</body>
+</html>
